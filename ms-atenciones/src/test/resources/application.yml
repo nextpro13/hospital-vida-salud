@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ms-atenciones-test
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/no_usada_en_pruebas
+    username: test
+    password: test
+  sql:
+    init:
+      mode: never
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+  cloud:
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false

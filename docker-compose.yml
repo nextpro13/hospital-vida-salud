@@ -1,0 +1,152 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  eureka-server:
+    build: { context: ., args: { MODULE: eureka-server } }
+    profiles: ["apps"]
+    ports:
+      - "8761:8761"
+
+  api-gateway:
+    build: { context: ., args: { MODULE: api-gateway } }
+    profiles: ["apps"]
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+    restart: on-failure
+
+  ms-pacientes:
+    build: { context: ., args: { MODULE: ms-pacientes } }
+    profiles: ["apps"]
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka-server: { condition: service_started }
+    restart: on-failure
+
+  ms-citas:
+    build: { context: ., args: { MODULE: ms-citas } }
+    profiles: ["apps"]
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka-server: { condition: service_started }
+    restart: on-failure
+
+  ms-atenciones:
+    build: { context: ., args: { MODULE: ms-atenciones } }
+    profiles: ["apps"]
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka-server: { condition: service_started }
+    restart: on-failure
+
+  ms-pagos:
+    build: { context: ., args: { MODULE: ms-pagos } }
+    profiles: ["apps"]
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka-server: { condition: service_started }
+    restart: on-failure
+
+  ms-notificaciones:
+    build: { context: ., args: { MODULE: ms-notificaciones } }
+    profiles: ["apps"]
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka-server: { condition: service_started }
+    restart: on-failure
+
+  ms-auditoria:
+    build: { context: ., args: { MODULE: ms-auditoria } }
+    profiles: ["apps"]
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RABBIT_HOST: rabbitmq
+      RABBIT_USER: ${RABBIT_USER}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      EUREKA_URL: http://eureka-server:8761/eureka
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      eureka-server: { condition: service_started }
+    restart: on-failure
+
+volumes:
+  pgdata:

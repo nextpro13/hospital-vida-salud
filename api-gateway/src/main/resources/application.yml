@@ -1,0 +1,62 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: pacientes
+              uri: lb://ms-pacientes
+              predicates:
+                - Path=/api/pacientes/**
+            - id: citas
+              uri: lb://ms-citas
+              predicates:
+                - Path=/api/citas/**
+            - id: atenciones
+              uri: lb://ms-atenciones
+              predicates:
+                - Path=/api/atenciones/**
+            - id: pagos
+              uri: lb://ms-pagos
+              predicates:
+                - Path=/api/pagos/**
+            - id: notificaciones
+              uri: lb://ms-notificaciones
+              predicates:
+                - Path=/api/notificaciones/**
+            - id: auditoria
+              uri: lb://ms-auditoria
+              predicates:
+                - Path=/api/auditoria/**
+          default-filters:
+            - AddResponseHeader=X-Hospital-Gateway, vida-salud
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 10s
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,gateway
+    endpoint:
+      gateway:
+        enabled: true
+        access: unrestricted
+      
+logging:
+  level:
+    pe.cibertec.hospital: INFO

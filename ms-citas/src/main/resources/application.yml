@@ -1,0 +1,55 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  application:
+    name: ms-citas
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:db_citas}
+    username: ${DB_USER:hospital}
+    password: ${DB_PASSWORD}
+    pool:
+      initial-size: 2
+      max-size: 10
+  sql:
+    init:
+      mode: always
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:hospital}
+    password: ${RABBIT_PASSWORD}
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000ms
+
+clientes:
+  pacientes:
+    url: http://ms-pacientes
+    timeout-ms: 2000
+    reintentos: 2
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    pe.cibertec.hospital: INFO

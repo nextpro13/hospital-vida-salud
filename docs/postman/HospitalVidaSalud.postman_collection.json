@@ -1,0 +1,745 @@
+{
+  "info": {
+    "name": "Hospital Vida Salud - T2",
+    "description": "Flujo funcional completo a través del API Gateway. Datos ficticios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get(\"dni\")) {",
+          "  pm.collectionVariables.set(\"dni\", \"7\" + String(Math.floor(Math.random()*1e7)).padStart(7, \"0\"));",
+          "  pm.collectionVariables.set(\"profesional\", \"MED-\" + String(Math.floor(Math.random()*1000)).padStart(3, \"0\"));",
+          "  pm.collectionVariables.set(\"operacion\", \"OP-\" + Date.now());",
+          "  const d = new Date(); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7));",
+          "  pm.collectionVariables.set(\"fechaCita\", d.toISOString().substring(0,10) + \"T10:30:00\");",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Pacientes",
+      "item": [
+        {
+          "name": "Registrar paciente (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/pacientes",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoDocumento\": \"DNI\",\n  \"numeroDocumento\": \"{{dni}}\",\n  \"nombres\": \"Lucia\",\n  \"apellidos\": \"Ficticia Demo\",\n  \"fechaNacimiento\": \"1992-03-15\",\n  \"telefono\": \"999111222\",\n  \"correo\": \"lucia.demo@correo-ficticio.pe\",\n  \"direccion\": \"Calle Ejemplo 100\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"pacienteId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar paciente por id (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/pacientes/{{pacienteId}}",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pacientes",
+                "{{pacienteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar paciente duplicado (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/pacientes",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoDocumento\": \"DNI\",\n  \"numeroDocumento\": \"{{dni}}\",\n  \"nombres\": \"Lucia\",\n  \"apellidos\": \"Ficticia Demo\",\n  \"fechaNacimiento\": \"1992-03-15\",\n  \"telefono\": \"999111222\",\n  \"correo\": \"lucia.demo@correo-ficticio.pe\",\n  \"direccion\": \"Calle Ejemplo 100\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar paciente inválido (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/pacientes",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoDocumento\": \"DNI\",\n  \"numeroDocumento\": \"123\",\n  \"correo\": \"x\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Paciente inexistente (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/pacientes/999999",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pacientes",
+                "999999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar pacientes (Flux)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/pacientes",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pacientes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Citas",
+      "item": [
+        {
+          "name": "Registrar cita (201, llamada síncrona a pacientes)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/citas",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"especialidad\": \"Cardiologia\",\n  \"fechaHora\": \"{{fechaCita}}\",\n  \"profesionalCodigo\": \"{{profesional}}\",\n  \"motivo\": \"Control administrativo\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"citaId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar cita (200)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/citas/{{citaId}}",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Citas del paciente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/citas/paciente/{{pacienteId}}",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "paciente",
+                "{{pacienteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar cita (200 → evento CitaConfirmada)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/citas/{{citaId}}/confirmar",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "confirmar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar otra vez (409 transición no permitida)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/citas/{{citaId}}/confirmar",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}",
+                "confirmar"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cita de paciente inexistente (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/citas",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": 999999,\n  \"especialidad\": \"Cardiologia\",\n  \"fechaHora\": \"{{fechaCita}}\",\n  \"profesionalCodigo\": \"MED-999\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Atenciones",
+      "item": [
+        {
+          "name": "Registrar atención (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/atenciones",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "atenciones"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"citaId\": {{citaId}},\n  \"area\": \"Consulta externa\",\n  \"observacion\": \"Atención administrativa de prueba\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"atencionId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar cita ATENDIDA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/citas/{{citaId}}",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "citas",
+                "{{citaId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"estado ATENDIDA\", () => pm.expect(pm.response.json().estado).to.eql(\"ATENDIDA\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Pagos",
+      "item": [
+        {
+          "name": "Registrar pago (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/pagos",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pagos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"atencionId\": {{atencionId}},\n  \"concepto\": \"Consulta externa (simulada)\",\n  \"monto\": 80.0,\n  \"medioPago\": \"TARJETA_DEBITO\",\n  \"numeroOperacion\": \"{{operacion}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pago con monto negativo (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/pagos",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pagos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"concepto\": \"Prueba\",\n  \"monto\": -10,\n  \"medioPago\": \"EFECTIVO\",\n  \"numeroOperacion\": \"OP-NEG-0001\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pago con operación duplicada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gateway}}/api/pagos",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "pagos"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"concepto\": \"Prueba\",\n  \"monto\": 10,\n  \"medioPago\": \"EFECTIVO\",\n  \"numeroOperacion\": \"{{operacion}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Eventos (consumidores)",
+      "item": [
+        {
+          "name": "Notificaciones del paciente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/notificaciones/paciente/{{pacienteId}}",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones",
+                "paciente",
+                "{{pacienteId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auditoría de la cita",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/auditoria/recurso/CITA/{{citaId}}",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "auditoria",
+                "recurso",
+                "CITA",
+                "{{citaId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Toda la auditoría",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway}}/api/auditoria",
+              "host": [
+                "{{gateway}}"
+              ],
+              "path": [
+                "api",
+                "auditoria"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "gateway",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "dni",
+      "value": ""
+    },
+    {
+      "key": "profesional",
+      "value": ""
+    },
+    {
+      "key": "operacion",
+      "value": ""
+    },
+    {
+      "key": "fechaCita",
+      "value": ""
+    },
+    {
+      "key": "pacienteId",
+      "value": ""
+    },
+    {
+      "key": "citaId",
+      "value": ""
+    },
+    {
+      "key": "atencionId",
+      "value": ""
+    }
+  ]
+}
