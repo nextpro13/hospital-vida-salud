@@ -19,7 +19,7 @@ class EstadoCitaTest {
     @Test
     @DisplayName("Una cita cancelada no se puede confirmar ni atender")
     void citaCanceladaEsFinal() {
-        assertThat(EstadoCita.CANCELADA.puedeTransicionarA(EstadoCita.CONFIRMADA)).isTrue();
+        assertThat(EstadoCita.CANCELADA.puedeTransicionarA(EstadoCita.CONFIRMADA)).isFalse();
         assertThat(EstadoCita.CANCELADA.puedeTransicionarA(EstadoCita.ATENDIDA)).isFalse();
     }
 
